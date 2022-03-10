@@ -1,3 +1,4 @@
+from email.message import Message
 from smtplib import SMTP_SSL
 import pytest
 import conf
@@ -17,13 +18,32 @@ def authenticated_smtp(smtp):
     return smtp
 
 
+def test_create_message():
+    message = mailer.create_message('test', 'test')
+
+    assert type(message) == Message
+    assert type(message.get('Resent-Date')) == str
+    assert type(message.get_payload()) == str
+
+
 def test_noop(smtp):
-    assert mailer.noop(smtp)[0] == 250
+    status_code, _ = mailer.noop(smtp)
+    assert status_code == 250
 
 
 def test_login(smtp):
-    assert mailer.login(smtp)[0] == 235
+    status_code, _ = mailer.login(smtp)
+    assert status_code == 235
+
+
+def test_send_message(authenticated_smtp):
+    message = mailer.create_message('test', 'test')
+    assert mailer.send_message(authenticated_smtp, message) == {}
 
 
 def test_send_alert(authenticated_smtp):
     assert mailer.send_alert(authenticated_smtp, 'Test Alert') == {}
+
+
+def test_send_report(authenticated_smtp):
+    assert mailer.send_report(authenticated_smtp, 'Test Report') == {}
